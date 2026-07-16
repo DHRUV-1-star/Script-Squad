@@ -187,3 +187,62 @@
   .auth-card-header { padding: 1.5rem 1.25rem 1rem; }
   .auth-footer { padding: 1rem 1.25rem 1.5rem; }
 }
+
+/* ── Forgot Password extras ────────────────────────────────────────────────── */
+
+/* Label row with "Forgot password?" inline */
+.auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.auth-forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.auth-forgot-link:hover {
+  color: var(--brand-primary-dark);
+  text-decoration: underline;
+}
+
+/* Success banner */
+.auth-success-banner {
+  margin: 0 2rem;
+  padding: 0.875rem 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--border-radius-sm);
+  color: #10b981;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Hint text under success */
+.auth-hint-text {
+  margin: 0.75rem 2rem 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Button styled as a link (e.g., "Back to Sign In") */
+.auth-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
