@@ -1,10 +1,9 @@
 # Dependencies
 node_modules/
 
-# Environment
+# Environment — keep .env.production committed (it holds only public URLs, not secrets)
 .env
 .env.local
-.env.production
 .env.*.local
 
 # Build outputs

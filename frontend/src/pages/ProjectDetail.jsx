@@ -258,7 +258,8 @@ export default function ProjectDetail() {
     // Fetch team members to display in header
     api.get('/team').then((res) => setTeamMembers(res.data.data || [])).catch(() => {});
     // Socket.io
-    socketRef.current = io('/', { path: '/socket.io' });
+    const backendUrl = import.meta.env.VITE_API_URL || '';
+    socketRef.current = io(backendUrl, { path: '/socket.io' });
     socketRef.current.emit('join-project', id);
     socketRef.current.on('task-updated', (data) => {
       setTasks((prev) => prev.map((t) => t._id === data.task._id ? data.task : t));
