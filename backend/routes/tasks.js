@@ -217,6 +217,23 @@ router.put('/reorder/bulk', protect, async (req, res) => {
 });
 
 
+// @route   PATCH /api/tasks/:id/privacy
+// @desc    Toggle isPrivate flag for a task (owner only)
+// @access  Private
+router.patch('/:id/privacy', protect, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, owner: req.user._id });
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+    task.isPrivate = !task.isPrivate;
+    await task.save();
+    res.json({ success: true, data: { _id: task._id, isPrivate: task.isPrivate } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // @route   GET /api/tasks/:id
 // @desc    Get single task
 // @access  Private

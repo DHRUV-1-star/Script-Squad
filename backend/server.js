@@ -16,7 +16,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   },
 });
@@ -39,7 +39,7 @@ app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/team', require('./routes/team'));
-
+app.use('/api/chat', require('./routes/chat'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -61,6 +61,18 @@ app.use((err, req, res, next) => {
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
+  // ── Personal user room ── each authenticated user joins their own room
+  // so targeted notifications (team requests, chat) reach only them
+  socket.on('join-user-room', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`Socket ${socket.id} joined personal room user-${userId}`);
+  });
+
+  socket.on('leave-user-room', (userId) => {
+    socket.leave(`user-${userId}`);
+  });
+
+  // ── Project collaboration rooms ──────────────────────────────────────────
   socket.on('join-project', (projectId) => {
     socket.join(`project-${projectId}`);
     console.log(`Socket ${socket.id} joined room project-${projectId}`);
@@ -82,6 +94,11 @@ io.on('connection', (socket) => {
     socket.to(`project-${data.projectId}`).emit('task-deleted', data);
   });
 
+  // ── Chat typing indicators ───────────────────────────────────────────────
+  socket.on('chat-typing', ({ toUserId, fromUserId, isTyping }) => {
+    socket.to(`user-${toUserId}`).emit('chat-typing', { fromUserId, isTyping });
+  });
+
   socket.on('disconnect', () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
   });
@@ -90,6 +107,5 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Script Squad API running on port ${PORT}`);
-  // Start deadline email reminder cron job
   startDeadlineReminderJob();
 });

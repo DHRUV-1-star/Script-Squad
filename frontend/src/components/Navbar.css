@@ -87,3 +87,63 @@
 
   .navbar-date { display: none; }
 }
+
+/* ── Notification Bell ─────────────────────────── */
+.navbar-bell {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius-full);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-bell:hover {
+  background: var(--bg-tertiary);
+  transform: scale(1.1);
+}
+
+.bell-icon {
+  font-size: 1rem;
+  display: block;
+  animation: bellRing 0s ease; /* triggered by JS class if needed */
+}
+
+.navbar-bell:hover .bell-icon {
+  animation: bellRing 0.4s ease;
+}
+
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0); }
+  20%       { transform: rotate(-15deg); }
+  40%       { transform: rotate(15deg); }
+  60%       { transform: rotate(-10deg); }
+  80%       { transform: rotate(10deg); }
+}
+
+.bell-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--brand-danger);
+  color: white;
+  border-radius: var(--border-radius-full);
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid var(--navbar-bg);
+  animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  line-height: 1;
+}
+
+@keyframes badgePop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}

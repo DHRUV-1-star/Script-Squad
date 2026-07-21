@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SocketProvider } from './contexts/SocketContext';
 import AppLayout from './components/AppLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -12,6 +13,7 @@ import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Analytics from './pages/Analytics';
 import Team from './pages/Team';
+import Chat from './pages/Chat';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -31,6 +33,12 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
+// Inner component so it can access useAuth for the SocketProvider
+function AppWithSocket({ children }) {
+  const { user } = useAuth();
+  return <SocketProvider user={user}>{children}</SocketProvider>;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -44,6 +52,8 @@ function AppRoutes() {
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="team" element={<Team />} />
         <Route path="analytics" element={<Analytics />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="chat/:userId" element={<Chat />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
@@ -54,24 +64,26 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '10px',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.875rem',
-                boxShadow: 'var(--shadow-md)',
-              },
-            }}
-          />
-          <AppRoutes />
-        </BrowserRouter>
+        <AppWithSocket>
+          <BrowserRouter>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '10px',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.875rem',
+                  boxShadow: 'var(--shadow-md)',
+                },
+              }}
+            />
+            <AppRoutes />
+          </BrowserRouter>
+        </AppWithSocket>
       </AuthProvider>
     </ThemeProvider>
   );

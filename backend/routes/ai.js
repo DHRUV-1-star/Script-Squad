@@ -91,4 +91,90 @@ Rules:
   }
 });
 
+// @route   POST /api/ai/parse-task
+// @desc    Parse a plain-English task description into structured fields
+// @access  Private
+router.post('/parse-task', protect, async (req, res) => {
+  const { text, projectNames = [] } = req.body;
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ success: false, message: 'Task description text is required' });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({ success: false, message: 'AI service not configured. Add GEMINI_API_KEY to .env' });
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const today = new Date().toISOString().split('T')[0];
+    const projectContext = projectNames.length > 0
+      ? `Existing projects the user has: ${projectNames.map((n) => `"${n}"`).join(', ')}.`
+      : 'The user has no existing projects yet.';
+
+    const prompt = `You are a smart task parser. Today's date is ${today}.
+
+The user described a task in plain English:
+"${text.trim()}"
+
+${projectContext}
+
+Extract the task details and return ONLY a valid JSON object (no markdown, no explanation):
+
+{
+  "title": "Short, actionable task title (max 80 chars)",
+  "description": "Expanded description of what needs to be done (1-2 sentences, max 200 chars, or empty string)",
+  "priority": "high" | "medium" | "low",
+  "dueDate": "YYYY-MM-DD format if a date is mentioned, otherwise null",
+  "suggestedProject": "The most relevant existing project name from the list above, or a new project name if none match (keep it short, max 40 chars)",
+  "status": "todo" | "inprogress" | "done"
+}
+
+Rules:
+- title should be concise and start with an action verb
+- priority defaults to "medium" if unclear
+- status defaults to "todo" if unclear  
+- dueDate: interpret relative dates like "Friday", "tomorrow", "next week" relative to today (${today})
+- For suggestedProject, prefer an existing project if the description mentions or implies one; otherwise suggest a logical new project name
+- Return ONLY the raw JSON object, no markdown fences`;
+
+    const result = await model.generateContent(prompt);
+    const rawText = result.response.text().trim();
+    const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      console.error('Gemini parse-task returned non-JSON:', rawText);
+      return res.status(500).json({ success: false, message: 'AI returned an unexpected response. Please try again.' });
+    }
+
+    const validPriorities = ['high', 'medium', 'low'];
+    const validStatuses = ['todo', 'inprogress', 'done'];
+
+    const sanitized = {
+      title: typeof parsed.title === 'string' ? parsed.title.trim().substring(0, 200) : text.trim().substring(0, 200),
+      description: typeof parsed.description === 'string' ? parsed.description.trim().substring(0, 300) : '',
+      priority: validPriorities.includes(parsed.priority) ? parsed.priority : 'medium',
+      dueDate: parsed.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(parsed.dueDate) ? parsed.dueDate : null,
+      suggestedProject: typeof parsed.suggestedProject === 'string' ? parsed.suggestedProject.trim().substring(0, 100) : '',
+      status: validStatuses.includes(parsed.status) ? parsed.status : 'todo',
+    };
+
+    console.log(`🤖 AI parsed task: "${sanitized.title}" → project: "${sanitized.suggestedProject}"`);
+    res.json({ success: true, data: sanitized });
+  } catch (err) {
+    console.error('Gemini API error (parse-task):', err.message);
+    const msg = err.message?.includes('API_KEY') || err.message?.includes('403')
+      ? 'Invalid or missing Gemini API key.'
+      : err.message?.includes('quota') || err.message?.includes('429')
+      ? 'AI quota exceeded. Please try again in a moment.'
+      : 'AI service error. Please try again.';
+    res.status(500).json({ success: false, message: msg });
+  }
+});
+
 module.exports = router;

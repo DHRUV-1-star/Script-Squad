@@ -75,6 +75,23 @@ router.post(
   }
 );
 
+// @route   PATCH /api/projects/:id/privacy
+// @desc    Toggle isPrivate flag for a project (owner only)
+// @access  Private
+router.patch('/:id/privacy', protect, async (req, res) => {
+  try {
+    const project = await Project.findOne({ _id: req.params.id, owner: req.user._id });
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    project.isPrivate = !project.isPrivate;
+    await project.save();
+    res.json({ success: true, data: { _id: project._id, isPrivate: project.isPrivate } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // @route   GET /api/projects/:id
 // @desc    Get single project
 // @access  Private

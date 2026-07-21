@@ -67,6 +67,12 @@ const taskSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // ── Privacy field ─────────────────────────────────────────────────────────
+    // When true, this task is hidden from the owner's team activity card
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

@@ -38,6 +38,12 @@ const projectSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // ── Privacy field ─────────────────────────────────────────────────────────
+    // When true, this project is hidden from the owner's team activity card
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
